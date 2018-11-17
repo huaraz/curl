@@ -431,7 +431,8 @@ CURLcode Curl_verify_certificate(struct connectdata *conn, int sockindex)
   }
 
   if(result == CURLE_OK && SSL_CONN_CONFIG(CAfile) &&
-      BACKEND->use_manual_cred_validation) {
+     BACKEND->use_manual_cred_validation &&
+     SSL_CONN_CONFIG(verifypeer)) {
     /*
      * Create a chain engine that uses the certificates in the CA file as
      * trusted certificates. This is only supported on Windows 7+.
@@ -485,7 +486,8 @@ CURLcode Curl_verify_certificate(struct connectdata *conn, int sockindex)
     }
   }
 
-  if(result == CURLE_OK) {
+  if((result == CURLE_OK) &&
+     SSL_CONN_CONFIG(verifypeer)) {
     CERT_CHAIN_PARA ChainPara;
 
     memset(&ChainPara, 0, sizeof(ChainPara));
@@ -534,10 +536,8 @@ CURLcode Curl_verify_certificate(struct connectdata *conn, int sockindex)
     }
   }
 
-  if(result == CURLE_OK) {
-    if(SSL_CONN_CONFIG(verifyhost)) {
-      result = verify_host(conn->data, pCertContextServer, conn_hostname);
-    }
+  if((result == CURLE_OK) && SSL_CONN_CONFIG(verifyhost)) {
+    result = verify_host(conn->data, pCertContextServer, conn_hostname);
   }
 
   if(cert_chain_engine) {
